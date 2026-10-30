@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مَكْتَبَةُ اليَاسَمِينِ الأَدَبِيَّةِ لِلنَّاشِئَةِ 📚✨</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- مكتبات Firebase السحابية -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+    <!-- نافذة إدخال بيانات الطالب -->
+    <div id="studentModal" class="modal-overlay">
+        <div class="modal-card">
+            <h2>مَرْحَباً بِكَ فِي بَحْرِ العُلُومِ 🌊✨</h2>
+            <p style="color: #64748b; margin-bottom: 25px;">رِفْعَةُ القِرَاءَةِ تَبْدَأُ مِنْ هُنَا. أُكْتُبِ اسْمَكَ وَصَفَكَ:</p>
+            
+            <div class="input-group">
+                <label for="studentNameInput">اسْمُ الطَّالِبِ الكَرِيمِ:</label>
+                <input type="text" id="studentNameInput" placeholder="مثال: يوسف بن أحمد العُماني" required>
+            </div>
+
+            <div class="input-group">
+                <label for="studentClassInput">الصَّفُّ وَالشُّعْبَةُ:</label>
+                <input type="text" id="studentClassInput" placeholder="مثال: الأول الأساسي / (1)" required>
+            </div>
+
+            <button class="btn btn-submit" onclick="saveStudentInfo()" style="margin-top: 10px;">ابْدَأِ الرِّحْلَةَ 🚀</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- الترويسة -->
+        <header>
+            <h1>مَكْتَبَةُ اليَاسَمِينِ الأَدَبِيَّةِ 📖</h1>
+            <div id="welcomeTag" class="student-welcome-tag">أهلاً بك في عالم الحكايات الجميلة</div>
+        </header>
+
+        <!-- لوحة الأوسمة والتقدم -->
+        <div class="rewards-section">
+            <h3 style="margin: 0; color: #b45309; font-size: 1.4rem;">🏆 لَوْحَةُ الأَوْسِمَةِ وَالأَمْجَادِ (30 قِصَّةً فَرِيدَةً)</h3>
+            <p id="progressText" style="margin: 8px 0; font-weight: 700; color: #78350f; font-size: 1.1rem;">أَكْمَلْتَ 0 مِنْ 30 قِصَّةً</p>
+            <div class="progress-bar-bg">
+                <div id="progressBar" class="progress-bar-fill"></div>
+            </div>
+
+            <div class="badges-grid">
+                <div id="badge1" class="badge-card">
+                    <span class="icon">🥉</span>
+                    <div style="text-align: right;"><strong>قَارِئٌ مُبْتَدِئٌ</strong><br><small>10 قِصَصٍ</small></div>
+                </div>
+                <div id="badge2" class="badge-card">
+                    <span class="icon">🥈</span>
+                    <div style="text-align: right;"><strong>قَارِئٌ نَشِيطٌ</strong><br><small>20 قِصَّةً</small></div>
+                </div>
+                <div id="badge3" class="badge-card">
+                    <span class="icon">👑</span>
+                    <div style="text-align: right;"><strong>أَمِيرُ البَيَانِ</strong><br><small>30 قِصَّةً</small></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- شبكة عرض القصص الرئيسية -->
+        <div id="homeView" class="card">
+            <h2 style="text-align: center; color: var(--primary); margin-bottom: 25px;">اخْتَرْ قِصَّةً لِتَغُوصَ فِي بَحْرِ مَعَانِيهَا:</h2>
+            <div class="story-grid" id="storiesContainer"></div>
+        </div>
+
+        <!-- شاشة قراءة القصة والأسئلة -->
+        <div id="storyView" class="card hidden">
+            <button class="btn btn-back" onclick="showHome()">⬅️ العَوْدَةُ لِقَائِمَةِ الحِكَايَاتِ</button>
+            <h2 id="storyTitle" class="story-title"></h2>
+            
+            <div class="controls">
+                <button class="btn btn-audio" onclick="toggleAudio()">🔊 <span id="audioBtnText">اسْتَمِعْ لِلسَّرْدِ الصَّوْتِيِّ</span></button>
+            </div>
+
+            <div id="storyText" class="story-text"></div>
+
+            <hr style="border: 0; height: 2px; background: #e2e8f0; margin: 35px 0;">
+
+            <h3 style="color: var(--primary); font-size: 1.5rem; text-align: center; margin-bottom: 25px;">❓ أَسْئِلَةُ الفَهْمِ وَالاسْتِيعَابِ الخَمْسَةُ</h3>
+            <form id="quizForm">
+                <div id="questionsContainer"></div>
+                <button type="button" class="btn btn-submit" onclick="submitQuiz()">تَسْلِيمُ الإِجَابَاتِ وَحِفْظُ الإِنْجَازِ ⭐</button>
+            </form>
+        </div>
+
+        <!-- شاشة النتيجة -->
+        <div id="resultView" class="card hidden result-screen">
+            <div class="emoji" id="resultEmoji">🎉</div>
+            <h2 id="resultTitle" style="color: var(--primary); font-size: 2.2rem;">أَبْدَعْتَ أَيُّهَا البَطَلُ!</h2>
+            <p id="resultText" style="font-size: 1.35rem; color: #475569; line-height: 1.8;"></p>
+            <button class="btn btn-submit" style="max-width: 280px; margin: 30px auto 0 auto;" onclick="showHome()">العودة للمكتبة الرئيسية 🏠</button>
+        </div>
+
+        <!-- زر لوحة المعلم -->
+        <div class="teacher-login-area">
+            <button class="btn-teacher" onclick="openTeacherDashboard()">🔑 لَوْحَةُ مُتَابَعَةِ المُعَلِّمِ الرَّسْمِيَّةُ</button>
+        </div>
+
+        <!-- لوحة المعلم -->
+        <div id="teacherDashboard" class="card hidden" style="border-color: var(--primary); background: #faf5ff;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e9d5ff; padding-bottom: 15px; margin-bottom: 20px;">
+                <h3 style="margin:0; color: var(--primary); font-size: 1.4rem;">📊 سِجِلُّ مُتَابَعَةِ جَمِيعِ الطُّلَّابِ وَحَالَةِ القِرَاءَةِ</h3>
+                <button class="btn btn-back" style="padding: 6px 14px; font-size: 0.95rem;" onclick="closeTeacherDashboard()">إغلاق اللوحة ✖</button>
+            </div>
+
+            <h4 style="color: #1e293b; margin-bottom: 10px;">👤 إِجْمَالِي إِنْجَازِ الطُّلَّابِ:</h4>
+            <table class="report-table" style="margin-bottom: 30px;">
+                <thead>
+                    <tr>
+                        <th>اسْمُ الطَّالِبِ</th>
+                        <th>الصَّفُّ وَالشُّعْبَةُ</th>
+                        <th>القِصَصُ المُنْجَزَةُ (من 30)</th>
+                        <th>التَّفَاصِيل الشَّامِلَة</th>
+                    </tr>
+                </thead>
+                <tbody id="reportTableBody"></tbody>
+            </table>
+
+            <div id="studentDetailView" class="hidden" style="background: white; padding: 20px; border-radius: 18px; border: 2px solid var(--primary-light);">
+                <h4 id="detailStudentTitle" style="color: var(--primary); margin-top: 0; font-size: 1.2rem;"></h4>
+                <div style="overflow-x: auto; max-height: 400px;">
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>رَقْم وَعُنْوَانُ الحِكَايَةِ</th>
+                                <th>حَالَةُ القِرَاءَةِ</th>
+                                <th>الدَّرَجَةُ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailTableBody"></tbody>
+                    </table>
+                </div>
+                <button class="btn btn-back" style="margin-top: 15px; font-size: 0.95rem; padding: 8px 16px;" onclick="backToAllStudents()">⬅️ العَوْدَةُ لِقَائِمَةِ الطُّلَّابِ</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
